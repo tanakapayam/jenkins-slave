@@ -3,7 +3,7 @@
 # - ansible, +ansible-playbook, +ansible-vault
 # - curl
 # - docker
-# - gcloud, +beta, +kubectl
+# - gcloud, +beta, +kubectl, +pubsub-emulator
 # - git
 # - go
 # - jq
@@ -69,7 +69,7 @@ RUN set -ex \
     && curl -s https://sdk.cloud.google.com \
         | bash >/dev/null 2>&1 \
     && mv google-cloud-sdk /opt \
-    && gcloud components install kubectl beta >/dev/null 2>&1 \
+    && gcloud components install beta kubectl pubsub-emulator >/dev/null 2>&1 \
     && mkdir -p /etc/ansible /opt/ansible \
     && printf "[local]\nlocalhost\n" \
         > /etc/ansible/hosts \
