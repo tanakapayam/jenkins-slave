@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+#
+# This program:
+# * creates ~/.ssh/jenkins-vault-password-file [0400]
+# * utilizes ansible-vault to encrypt or decrypt files
+#
+# Usage:
+#   jenkins-vault \
+#       [create|decrypt|edit|encrypt|encrypt_string|rekey|view] \
+#       [--help] \
+#       [options] \
+#       vault-file
+
+
+# die on error
+set -o errexit
+set -o pipefail
+
+
+# env vars
+export JENKINS_VAULT_PASSWORD_FILE="${HOME}/.ssh/jenkins-vault-password-file"
+
+
+check_ansible_vault() {
+    # check ansible-vault exists
+
+    local ansible_vault=$(command -v ansible-vault)
+    local cwd=$(cd $(dirname $(readlink -f $0)); pwd)
+
+    if [ -z $ansible_vault ]; then
+        echo >&2 "${RED}NOT FOUND:${RESET} ${BOLD}ansible-vault${RESET}"
+        echo >&2
+        cat >&2 ${cwd}/../README.md
+        exit 1
+    fi
+}
+
+
+create_vault_password_dir() {
+    # ensure vault password directory exists
+    # and is accessible only by owner
+
+    local jenkins_vault_password_dir=$(dirname $JENKINS_VAULT_PASSWORD_FILE)
+
+    mkdir -p $jenkins_vault_password_dir \
+        && chmod 700 $jenkins_vault_password_dir
+}
+
+
+create_vault_password_file() {
+    # ensure vault password file exists
+    # and is read-only by owner
+
+    if [ ! -f $JENKINS_VAULT_PASSWORD_FILE ]; then
+        touch $JENKINS_VAULT_PASSWORD_FILE \
+            && chmod 600 $JENKINS_VAULT_PASSWORD_FILE
+
+        uuidgen \
+            | base64 \
+            > $JENKINS_VAULT_PASSWORD_FILE
+    fi
+
+    chmod 400 $JENKINS_VAULT_PASSWORD_FILE
+
+    echo >&2 "# JENKINS_VAULT_PASSWORD_FILE"
+    echo >&2 "$(ls -l $JENKINS_VAULT_PASSWORD_FILE)"
+    echo >&2
+}
+
+
+ansible_vault() {
+    ansible-vault \
+        --vault-password-file="$JENKINS_VAULT_PASSWORD_FILE" \
+        "$@" \
+        | sed -e 's/ansible-vault/jenkins-vault/g'
+}
+
+
+# main
+
+## prep
+check_ansible_vault
+create_vault_password_dir
+create_vault_password_file
+
+## create, decrypt, edit, encrypt, encrypt_string, rekey, view
+ansible_vault "$@"
