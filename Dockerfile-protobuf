@@ -63,6 +63,7 @@ RUN set -ex \
         $DOCKER_PKG \
         $MAVEN_PKG \
         $POSTGRESQL_PKG \
+    && DEBIAN_FRONTEND=noninteractive apt-get -yqq install libc-ares2 \
     && curl -sO ${GO_TARBALL} \
     && tar -C /usr/local -xzf $(basename ${GO_TARBALL}) \
     && rm -f $(basename ${GO_TARBALL}) \
