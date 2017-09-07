@@ -22,6 +22,7 @@ ARG DOCKER_PKG=docker-ce
 ARG GO_TARBALL=https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz
 ARG MAVEN_PKG=maven
 ARG POSTGRESQL_PKG=postgresql-9.5
+ARG NODEJS_VERSION=8.x
 
 ENV CLOUDSDK_CORE_DISABLE_PROMPTS 1
 ENV PATH /usr/local/go/bin:/opt/google-cloud-sdk/bin:/opt/ansible/bin:$PATH
@@ -58,11 +59,14 @@ RUN set -ex \
         > /etc/apt/sources.list.d/pgdg.list \
     && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
         | apt-key add - \
+    && curl -fsSL https://deb.nodesource.com/setup_${NODEJS_VERSION} \
+        | bash - \
     && apt-get -qq update \
     && DEBIAN_FRONTEND=noninteractive apt-get -yqq install \
         $DOCKER_PKG \
         $MAVEN_PKG \
         $POSTGRESQL_PKG \
+        nodejs \
     && curl -sO ${GO_TARBALL} \
     && tar -C /usr/local -xzf $(basename ${GO_TARBALL}) \
     && rm -f $(basename ${GO_TARBALL}) \
